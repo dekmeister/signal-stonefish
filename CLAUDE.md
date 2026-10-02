@@ -1,4 +1,4 @@
-# CLAUDE.md: signal-stonefish
+# CLAUDE.md: Signal Stonefish
 
 An educational single page showing what SNR, SINAD, THD and (S+N)/N mean on real
 audio (voice, music, a 1 kHz tone or a user file). It has live playback, waveform

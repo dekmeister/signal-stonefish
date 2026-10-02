@@ -1,7 +1,8 @@
-# SNR & SINAD by ear
+# Signal Stonefish
 
-A single-page, JavaScript-only demo of what **SNR** (signal-to-noise ratio) and
-**SINAD** (signal-to-noise-and-distortion) actually sound and look like.
+Signal Stonefish is a single-page, JavaScript-only demo of what **SNR**
+(signal-to-noise ratio) and **SINAD** (signal-to-noise-and-distortion)
+actually sound and look like.
 
 Pick a voice clip, a music clip, a 1 kHz test tone, or your own file. Add noise
 (set as SNR) and distortion (set as THD on the standard 1 kHz test tone), then:
