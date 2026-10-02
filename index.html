@@ -117,7 +117,8 @@ dialog form { text-align: right; margin-top: 12px; }
         <option value="hard">Hard clip</option>
         <option value="soft">Soft clip</option>
         <option value="asym">One-sided clip (AM detector)</option>
-        <option value="bits">Bit-depth reduction</option>
+        <option value="bits">Bit-depth reduction (linear)</option>
+        <option value="mulaw">Bit-depth reduction (μ-law)</option>
       </select>
     </div>
 
@@ -352,6 +353,18 @@ const DIST = {
     k: t => Math.pow(10, -3 + 6 * t) / A_REF,
     apply(x, t, y) { const k = this.k(t); for (let i = 0; i < x.length; i++) y[i] = x[i] > 0 ? Math.tanh(k * x[i]) / k : x[i]; },
     describe(t) { return `positive peaks compressed, drive ×${(this.k(t) * A_REF).toPrecision(2)} at test-tone level`; },
+  },
+  mulaw: { // G.711-style logarithmic (μ-law) quantiser: error scales with level, so quiet sounds survive
+    bits: t => 16 - 14 * t,
+    apply(x, t, y) {
+      const q = Math.pow(2, 1 - this.bits(t)), MU = 255, L = Math.log1p(MU);
+      for (let i = 0; i < x.length; i++) {
+        const v = Math.max(-1, Math.min(1, x[i])), c = Math.sign(v) * Math.log1p(MU * Math.abs(v)) / L;
+        const cq = Math.round(c / q) * q;
+        y[i] = Math.sign(cq) * Math.expm1(Math.abs(cq) * L) / MU;
+      }
+    },
+    describe(t) { return `≈ ${this.bits(t).toFixed(1)}-bit μ-law (G.711 is 8-bit)`; },
   },
   bits: {
     bits: t => 24 - 23 * t,
@@ -865,7 +878,7 @@ const PRESETS = [
   { id: "hf-mds", name: "Ham MDS (barely there)", snrOn: true, snr: 0, noise: "white", thdOn: false, band: [300, 2700],
     note: "ARRL minimum discernible signal: 3 dB (S+N)/N, i.e. signal equal to noise." },
   { group: "Telephone" },
-  { id: "tel-g712", name: "Telephone channel (G.712)", snrOn: true, snr: 46, noise: "white", thdOn: true, thd: -33, dist: "bits", band: [300, 3400],
+  { id: "tel-g712", name: "Telephone channel (G.712)", snrOn: true, snr: 46, noise: "white", thdOn: true, thd: -33, dist: "mulaw", band: [300, 3400],
     note: "ITU-T G.712: 300–3400 Hz, 33 dB signal-to-quantisation-distortion. Noise level is inferred." },
 ];
 {
