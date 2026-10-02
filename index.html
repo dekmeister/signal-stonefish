@@ -534,8 +534,28 @@ function fadeOut({ node, gain }) {
   gain.gain.linearRampToValueAtTime(0, t + FADE);
   node.stop(t + FADE + 0.01);
 }
+// iOS/iPadOS treats Web Audio as "ambient" audio, which the hardware silent switch mutes.
+// Ask for a "playback" session instead (Safari 16.4+), and on older iOS get the same
+// effect by playing a silent <audio> clip, which is an inaudible side effect only.
+function playbackSession() {
+  try { navigator.audioSession.type = "playback"; } catch (_) {}
+  if (S.silent === undefined) {
+    try {
+      const n = 800, b = new DataView(new ArrayBuffer(44 + n)), w = (o, s) => [...s].forEach((c, i) => b.setUint8(o + i, c.charCodeAt(0)));
+      w(0, "RIFF"); b.setUint32(4, 36 + n, true); w(8, "WAVEfmt "); b.setUint32(16, 16, true);
+      b.setUint16(20, 1, true); b.setUint16(22, 1, true); b.setUint32(24, 8000, true);
+      b.setUint32(28, 8000, true); b.setUint16(32, 1, true); b.setUint16(34, 8, true);
+      w(36, "data"); b.setUint32(40, n, true);
+      for (let i = 0; i < n; i++) b.setUint8(44 + i, 128); // 8-bit silence
+      S.silent = new Audio(URL.createObjectURL(new Blob([b], { type: "audio/wav" })));
+      S.silent.loop = true;
+    } catch (_) { S.silent = null; }
+  }
+  if (S.silent) S.silent.play().catch(() => {});
+}
 function play() {
   if (!S.buffer) return;
+  playbackSession();
   const ac = audioCtx(); ac.resume();
   const pos = playPos(), t = ac.currentTime;
   if (S.play.node) fadeOut(S.play);
@@ -551,6 +571,7 @@ function play() {
 }
 function pause() {
   if (S.play.node) { S.play.pos = playPos(); fadeOut(S.play); S.play.node = null; }
+  if (S.silent) S.silent.pause();
   updateTransport(); drawOverview();
 }
 function stop() { pause(); S.play.pos = 0; drawOverview(); }
