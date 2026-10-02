@@ -35,3 +35,37 @@ Attribution:
 Attribution:
 
 > "Ryno's Theme" by Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/). Excerpt trimmed.
+
+## voice-woman.wav
+
+| | |
+|---|---|
+| Title | Bobs, a Girl Detective by Grace May North - 9/31. A Hurried Lunch |
+| Uploader | freeaudiobooks84 (https://www.youtube.com/watch?v=MqaWQr0WXcE) |
+| Reader | Not identified in the video metadata (LibriVox volunteer) |
+| URL | https://www.youtube.com/watch?v=MqaWQr0WXcE |
+| License (as reported) | Creative Commons Attribution license (reuse allowed), i.e. CC BY 3.0 on YouTube. The video description states the LibriVox recording is CC0 1.0, and the 1914 text is public domain. |
+| Excerpt | 00:52.1 to 01:12.1 (20.0 s), mid-chapter, starting and ending in pauses |
+| Voice | Female; median pitch (F0) about 226 Hz, measured with an autocorrelation tracker |
+| Processing | Mixed to mono, 48 kHz, 16-bit PCM, 20 ms fade in and out |
+
+Attribution:
+
+> "Bobs, a Girl Detective" by Grace May North, LibriVox recording (CC0 1.0), via freeaudiobooks84 on YouTube (https://www.youtube.com/watch?v=MqaWQr0WXcE), licensed under CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/). Excerpt trimmed.
+
+## voice-deep.wav
+
+| | |
+|---|---|
+| Title | Edgar Allan Poe - A Dream Within A Dream |
+| Uploader | Public Domain Poetry (https://www.youtube.com/channel/UCroLapnOSeXqRNLTPh6ZAOw) |
+| Reader | Not identified in the video metadata |
+| URL | https://www.youtube.com/watch?v=TxpRr4gAkuA |
+| License (as reported) | Creative Commons Attribution license (reuse allowed), i.e. CC BY 3.0 on YouTube. The poem (Poe, 1849) is public domain. |
+| Excerpt | 00:29.2 to 00:48.2 (19.0 s), mid-poem, starting and ending in pauses |
+| Voice | Male, deep; median pitch (F0) about 96 Hz (10th–90th percentile 84–106 Hz) |
+| Processing | Mixed to mono, 48 kHz, 16-bit PCM, 20 ms fade in and out |
+
+Attribution:
+
+> "A Dream Within A Dream" by Edgar Allan Poe (public domain), read in a video by Public Domain Poetry on YouTube (https://www.youtube.com/watch?v=TxpRr4gAkuA), licensed under CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/). Excerpt trimmed.

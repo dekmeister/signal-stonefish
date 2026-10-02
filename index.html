@@ -88,6 +88,8 @@ dialog form { text-align: right; margin-top: 12px; }
       <div class="row">
         <select id="src">
           <option value="voice">Voice</option>
+          <option value="voice-woman">Voice (woman)</option>
+          <option value="voice-deep">Voice (deep)</option>
           <option value="music">Music</option>
           <option value="tone">1 kHz tone</option>
           <option value="file" hidden disabled>Your file</option>
@@ -207,6 +209,12 @@ dialog form { text-align: right; margin-top: 12px; }
   <h3>Audio credits</h3>
   <p>Voice: “Inscription for an Old Bed”, read by NJB for LibriVox (public domain), via
     <a href="https://www.youtube.com/watch?v=OD9rGVOVi7E" target="_blank" rel="noopener">The World of Audiobooks</a>,
+    <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>. Excerpt trimmed.</p>
+  <p>Voice (woman): “Bobs, a Girl Detective” by Grace May North, LibriVox recording (CC0), via
+    <a href="https://www.youtube.com/watch?v=MqaWQr0WXcE" target="_blank" rel="noopener">freeaudiobooks84</a>,
+    <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>. Excerpt trimmed.</p>
+  <p>Voice (deep): “A Dream Within A Dream” by Edgar Allan Poe (public domain), read in a video by
+    <a href="https://www.youtube.com/watch?v=TxpRr4gAkuA" target="_blank" rel="noopener">Public Domain Poetry</a>,
     <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>. Excerpt trimmed.</p>
   <p>Music: “Ryno's Theme” by Kevin MacLeod (<a href="https://incompetech.com" target="_blank" rel="noopener">incompetech.com</a>),
     <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Excerpt trimmed.</p>
@@ -975,7 +983,7 @@ $("fileIn").addEventListener("change", async e => {
   audioCtx();
   updateLabels();
   S.sources.tone = makeTone();
-  for (const name of ["voice", "music"]) {
+  for (const name of ["voice", "voice-woman", "voice-deep", "music"]) {
     const opt = $("src").querySelector(`option[value="${name}"]`);
     const got = await fetchBundled(name);
     if (got) { try { S.sources[name] = await decode(got.data); continue; } catch (_) {} }
