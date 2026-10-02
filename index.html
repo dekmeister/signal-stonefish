@@ -109,13 +109,14 @@ dialog form { text-align: right; margin-top: 12px; }
       </select>
     </div>
 
-    <div id="sdrCtl">
-      <div class="lab"><label><input type="checkbox" id="sdrOn"> Distortion</label><span class="val">SDR <input type="number" id="sdrNum" step="any" value="20" aria-label="SDR in dB"> dB</span></div>
-      <input type="range" class="rev" id="sdr" min="0" max="60" step="1" value="20">
+    <div id="thdCtl">
+      <div class="lab"><label><input type="checkbox" id="thdOn"> Distortion</label><span class="val">THD <input type="number" id="thdNum" step="any" value="-20" aria-label="THD in dBc"> dBc</span></div>
+      <input type="range" id="thd" min="-60" max="0" step="1" value="-20">
       <div class="ends"><span>none</span><span>more distortion →</span></div>
       <select id="dist">
         <option value="hard">Hard clip</option>
         <option value="soft">Soft clip</option>
+        <option value="asym">One-sided clip (AM detector)</option>
         <option value="bits">Bit-depth reduction</option>
       </select>
     </div>
@@ -141,8 +142,8 @@ dialog form { text-align: right; margin-top: 12px; }
       <table class="readout">
         <tr><td>SNR</td><td id="tSnr">–</td></tr>
         <tr><td>(S+N)/N</td><td id="tSnn">–</td></tr>
-        <tr><td>SDR</td><td id="tSdr">–</td></tr>
-        <tr><td>THD</td><td id="tThd">–</td></tr>
+        <tr><td>THD (1 kHz tone)</td><td id="tThd">–</td></tr>
+        <tr><td>SDR (this clip)</td><td id="tSdr">–</td></tr>
         <tr class="main"><td>SINAD</td><td id="tSinad">–</td></tr>
       </table>
       <div class="note" id="tNote"></div>
@@ -170,32 +171,34 @@ dialog form { text-align: right; margin-top: 12px; }
 
 <dialog id="about">
   <h2>What these numbers mean</h2>
-  <p>All three are power ratios in decibels. +10 dB is 10× the power and +20 dB is 100×. Each bit of digital audio is worth about 6 dB.</p>
+  <p>All of these are power ratios in decibels. +10 dB is 10× the power and +20 dB is 100×. Each bit of digital audio is worth about 6 dB.</p>
 
   <h3>SNR: signal-to-noise ratio</h3>
   <p>Signal power ÷ noise power. Noise is unrelated to the signal (hiss, hum, static) and is still there in the silences.</p>
 
-  <h3>SDR: signal-to-distortion ratio</h3>
-  <p>Signal power ÷ distortion power. Distortion is the signal itself bent out of shape (clipping, quantisation), so it comes and goes with the signal.</p>
+  <h3>(S+N)/N</h3>
+  <p>SNR with the signal measured noise-included, the way AM airband and HF receiver sensitivity is quoted. It is close to SNR when SNR is high, but at threshold 6 dB (S+N)/N is only 4.7 dB SNR.</p>
 
-  <h3>(S+N)/N and THD</h3>
-  <p>The same two quantities in the form many specs use. <span class="mono">(S+N)/N</span> is SNR with the signal measured noise-included, as AM airband and HF receiver sensitivity is quoted. It is close to SNR when SNR is high, but at threshold 6 dB (S+N)/N is only 4.7 dB SNR.
-    THD is distortion as a percentage of the signal amplitude: 10% ≈ 20 dB SDR, 1% ≈ 40 dB.</p>
+  <h3>THD: total harmonic distortion</h3>
+  <p>Distortion is the signal itself bent out of shape (clipping, quantisation), so it comes and goes with the signal. Like a real receiver spec, it is set and quoted as THD on a standard 1 kHz test tone, measured within the audio band:
+    harmonics the audio filter removes don't count. In dBc (relative to the tone): −20 dBc = 10%, −40 dBc = 1%.</p>
+  <p>The distortion is then a fixed property of the "radio", applied unchanged to whatever you play. <b>SDR (this clip)</b> is the distortion actually measured on the current sound, and differs from the tone figure because speech and music don't distort the way a steady tone does.</p>
 
   <h3>SINAD: signal-to-noise-and-distortion</h3>
   <p><span class="mono">SINAD = (S + N + D) / (N + D)</span>. It counts everything unwanted, so it is never better than the worse of SNR and SDR.
     Radio receivers quote sensitivity as the input level giving 12 dB SINAD. For converters, effective bits ≈ (SINAD − 1.76) / 6.02.</p>
 
   <h3>Same number, different sound</h3>
-  <p>SINAD says how much is wrong, not what kind. Compare the two “20 dB SINAD” presets: noise is a hiss you can listen past, while distortion makes the sound harsh.</p>
+  <p>SINAD says how much is wrong, not what kind. Try “Noise only (SNR 20 dB)” and “Distortion only (10% THD)”: on the test tone both give 20 dB SINAD, but noise is a hiss you can listen past, while distortion makes the sound harsh.</p>
 
   <h3>Reading the plots</h3>
   <p>Grey (original) is the clean source. Blue (degraded) is what you hear: the source plus everything added. Red (added) is just the noise + distortion, blue minus grey, which is what SINAD measures. In the spectrum, noise is a broad floor and distortion appears as new peaks at multiples of the signal's frequencies (clearest with the 1 kHz tone).
     The FFT floor sits below the SNR figure because the noise is spread over about 2000 frequency bins.</p>
 
   <h3>How it's measured</h3>
-  <p>Noise is scaled to hit the SNR exactly. The distortion setting is searched until the measured SDR matches. SINAD is measured on the final output.
-    Signal power is averaged over the whole clip, pauses included, and bandwidth limiting counts as distortion.</p>
+  <p>All figures are in-band: the reference is the original passed through the same audio filter, so a narrow bandwidth is not counted as distortion (frequency response is a separate spec), and noise is filtered too.
+    Noise is scaled to hit the SNR exactly. The distortion strength is searched until the test tone's THD matches. SINAD is measured on the final output.
+    Signal power is averaged over the whole clip, pauses included.</p>
   <h3>Radio presets</h3>
   <p>Each uses the figure from the named standard: the sensitivity threshold, or the strong-signal limits. Where a spec gives (S+N)/N, it is converted to SNR. ETSI SINAD figures are psophometrically weighted and are used as-is (about 2.5 dB kinder than unweighted).
     Real FM near threshold also has clicks, and HF has static crashes, which plain white noise doesn't capture.</p>
@@ -327,20 +330,28 @@ function getBandNoise(type, n, band) {
 }
 
 // ---------- distortion: t in [0,1], 0 = gentle, 1 = harsh ----------
+// The non-linearity is fixed in absolute terms, like a real receiver's. Its strength is set by
+// the THD it gives on the standard 1 kHz test tone (A_REF, -6 dBFS), measured within the audio band.
+const A_REF = 0.5;
 const DIST = {
   soft: {
-    k: (t, peak) => Math.pow(10, -3 + 6 * t) / peak,
-    apply(x, t, y, peak) { const k = this.k(t, peak); for (let i = 0; i < x.length; i++) y[i] = Math.tanh(k * x[i]); },
-    describe(t, peak) { return `tanh drive ×${(this.k(t, peak) * peak).toPrecision(2)}`; },
+    k: t => Math.pow(10, -3 + 6 * t) / A_REF,
+    apply(x, t, y) { const k = this.k(t); for (let i = 0; i < x.length; i++) y[i] = Math.tanh(k * x[i]); },
+    describe(t) { return `tanh drive ×${(this.k(t) * A_REF).toPrecision(2)} at test-tone level`; },
   },
   hard: {
-    c: (t, peak) => peak * Math.pow(10, -3 * t),
-    apply(x, t, y, peak) { const c = this.c(t, peak); for (let i = 0; i < x.length; i++) y[i] = x[i] > c ? c : x[i] < -c ? -c : x[i]; },
-    describe(t, peak, x) {
-      const c = this.c(t, peak); let k = 0;
+    c: t => A_REF * Math.pow(10, -3 * t),
+    apply(x, t, y) { const c = this.c(t); for (let i = 0; i < x.length; i++) y[i] = x[i] > c ? c : x[i] < -c ? -c : x[i]; },
+    describe(t, x) {
+      const c = this.c(t); let k = 0;
       for (let i = 0; i < x.length; i++) if (Math.abs(x[i]) > c) k++;
-      return `clipped at ${(100 * c / peak).toPrecision(2)}% of peak · ${(100 * k / x.length).toFixed(1)}% of samples`;
+      return `clips at ${(100 * c / A_REF).toPrecision(2)}% of test-tone peak · ${(100 * k / x.length).toFixed(1)}% of this clip's samples clipped`;
     },
+  },
+  asym: { // clips one polarity only, like an overdriven AM envelope detector: adds even harmonics too
+    k: t => Math.pow(10, -3 + 6 * t) / A_REF,
+    apply(x, t, y) { const k = this.k(t); for (let i = 0; i < x.length; i++) y[i] = x[i] > 0 ? Math.tanh(k * x[i]) / k : x[i]; },
+    describe(t) { return `positive peaks compressed, drive ×${(this.k(t) * A_REF).toPrecision(2)} at test-tone level`; },
   },
   bits: {
     bits: t => 24 - 23 * t,
@@ -348,25 +359,54 @@ const DIST = {
     describe(t) { return `≈ ${this.bits(t).toFixed(1)}-bit quantiser`; },
   },
 };
-function sdrOf(x, y) {
+// residual power ratio D/S of y against reference x, after least-squares gain matching
+function distRatio(x, y) {
   const g = dot(y, x) / dot(x, x);
   let pd = 0, ps = 0;
   for (let i = 0; i < x.length; i++) { const d = y[i] - g * x[i]; pd += d * d; ps += g * g * x[i] * x[i]; }
-  return pd === 0 ? Infinity : dB(ps / pd);
+  return ps > 0 ? pd / ps : Infinity;
 }
-function solveDist(x, type, target, peak) {
-  const D = DIST[type], step = Math.max(1, Math.ceil(x.length / 120000));
-  const xs = new Float32Array(Math.ceil(x.length / step));
-  for (let i = 0, j = 0; i < x.length; i += step, j++) xs[j] = x[i];
-  const ys = new Float32Array(xs.length);
-  const sdrAt = t => { D.apply(xs, t, ys, peak); return sdrOf(xs, ys); };
-  if (sdrAt(1) >= target) return 1;
-  let lo = 0, hi = 1;
-  for (let it = 0; it < 40; it++) {
-    const mid = (lo + hi) / 2;
-    if (sdrAt(mid) > target) lo = mid; else hi = mid;
+function testTone(band) { // 1 kHz at A_REF, and its band-limited version (the THD reference)
+  if (!S.tt || S.tt.sr !== S.sr) {
+    const n = Math.round(0.25 * S.sr), x = new Float32Array(n);
+    for (let i = 0; i < n; i++) x[i] = A_REF * Math.sin(2 * Math.PI * 1000 * i / S.sr);
+    S.tt = { sr: S.sr, x, banded: {} };
   }
-  return (lo + hi) / 2;
+  if (!band) return { x: S.tt.x, ref: S.tt.x };
+  const key = band.join("-");
+  if (!S.tt.banded[key]) S.tt.banded[key] = bandLimit(S.tt.x, band);
+  return { x: S.tt.x, ref: S.tt.banded[key] };
+}
+// THD in dBc of the test tone through non-linearity type at strength t, then the audio filter.
+// Measured on the middle half, clear of the filter's start-up transients.
+function toneThd(type, t, band) {
+  const { x, ref } = testTone(band), y = new Float32Array(x.length);
+  DIST[type].apply(x, t, y);
+  const yb = band ? bandLimit(y, band) : y, a = x.length >> 2, b = 3 * a;
+  return dB(distRatio(ref.subarray(a, b), yb.subarray(a, b)));
+}
+// Find the strength whose test-tone THD is closest to the target. A coarse scan finds the first
+// crossing (quantisation THD moves in jumps, so it isn't monotonic), then bisection refines it.
+function solveDist(type, targetDbc, band) {
+  const N = 64, at = t => toneThd(type, t, band);
+  let best = { t: 0, err: Infinity }, prev = 0, crossed = false;
+  const consider = (t, v) => { const e = Math.abs(v - targetDbc); if (e < best.err) best = { t, err: e }; };
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, v = at(t);
+    consider(t, v);
+    if (v >= targetDbc) {
+      crossed = true;
+      let lo = prev, hi = t;
+      for (let it = 0; it < 24; it++) {
+        const mid = (lo + hi) / 2, m = at(mid);
+        consider(mid, m);
+        if (m < targetDbc) lo = mid; else hi = mid;
+      }
+      break;
+    }
+    prev = t;
+  }
+  return { t: best.t, pinned: !crossed && best.err > 0.5 };
 }
 function gainMatch(z, x) { // scale z so its linear part equals x exactly
   const g = dot(z, x) / dot(x, x);
@@ -401,47 +441,54 @@ function bandLimit(x, [lo, hi]) {
 }
 
 // ---------- the processing chain ----------
+// Everything is measured against the band-limited original, so bandwidth loss is not counted
+// as distortion (frequency response is its own spec), and SNR/SINAD are in-band figures.
 function processAudio() {
   const x = S.x; if (!x) return;
-  const n = x.length, P = power(x);
+  const n = x.length;
   const st = {
     snrOn: $("snrOn").checked, snr: +$("snrNum").value, noise: noiseSeg.value,
-    sdrOn: $("sdrOn").checked, sdr: +$("sdrNum").value, dist: distSeg.value, band: bandSeg.value,
+    thdOn: $("thdOn").checked, thd: +$("thdNum").value, dist: distSeg.value, band: bandSeg.value,
   };
-  // 1–2. distortion and bandwidth, cached so that noise-only changes are instant
-  const zKey = [st.sdrOn, st.sdr, st.dist, st.band, BANDS[st.band]].join("|");
-  if (!S.zc || S.zc.key !== zKey) {
-    let z, distInfo = "";
-    if (st.sdrOn) { // memoryless non-linearity, tuned to target SDR
-      const t = solveDist(x, st.dist, st.sdr, S.peak);
+  const band = BANDS[st.band];
+  // reference: the clean source through the audio filter
+  const bKey = String(band);
+  if (!S.xb || S.xb.x !== x || S.xb.key !== bKey) S.xb = { x, key: bKey, xb: band ? bandLimit(x, band) : x };
+  const xb = S.xb.xb, P = power(xb);
+  // 1–2. distortion then the audio filter; cached so noise-only changes are instant
+  const zKey = [st.thdOn, st.thd, st.dist, bKey].join("|");
+  if (!S.zc || S.zc.key !== zKey || S.zc.x !== x) {
+    let z = x, distInfo = "", thdTone = -Infinity;
+    if (st.thdOn) {
+      const { t, pinned } = solveDist(st.dist, st.thd, band);
       z = new Float32Array(n);
-      DIST[st.dist].apply(x, t, z, S.peak);
-      distInfo = DIST[st.dist].describe(t, S.peak, x);
-      gainMatch(z, x);
-    } else z = Float32Array.from(x);
-    if (st.band !== "full") { z = bandLimit(z, BANDS[st.band]); gainMatch(z, x); }
-    S.zc = { key: zKey, z, distInfo };
+      DIST[st.dist].apply(x, t, z);
+      distInfo = (pinned ? "maximum this type can reach in this band · " : "") + DIST[st.dist].describe(t, x);
+      thdTone = toneThd(st.dist, t, band);
+    }
+    z = band ? bandLimit(z, band) : Float32Array.from(z);
+    gainMatch(z, xb);
+    let Pd = 0; for (let i = 0; i < n; i++) { const d = z[i] - xb[i]; Pd += d * d; }
+    S.zc = { key: zKey, x, z, distInfo, thdTone, Pd: Pd / n };
   }
-  const { z, distInfo } = S.zc;
-  // 3. additive noise
+  const { z, distInfo, thdTone, Pd } = S.zc;
+  // 3. additive noise, band-limited by the same audio filter, scaled to the in-band SNR
   const out = new Float32Array(n);
   let Pn = 0;
   if (st.snrOn) {
-    const base = getBandNoise(st.noise, n, BANDS[st.band]), k = Math.sqrt(P / Math.pow(10, st.snr / 10));
+    const base = getBandNoise(st.noise, n, band), k = Math.sqrt(P / Math.pow(10, st.snr / 10));
     for (let i = 0; i < n; i++) out[i] = z[i] + k * base[i];
     Pn = k * k;
   } else out.set(z);
-  // measurements
-  let Pd = 0; for (let i = 0; i < n; i++) { const d = z[i] - x[i]; Pd += d * d; } Pd /= n;
-  const g = dot(out, x) / dot(x, x), err = new Float32Array(n);
-  for (let i = 0; i < n; i++) err[i] = out[i] - g * x[i];
+  // SINAD: everything that isn't the (band-limited) original
+  const g = dot(out, xb) / dot(xb, xb), err = new Float32Array(n);
+  for (let i = 0; i < n; i++) err[i] = out[i] - g * xb[i];
   const Pe = power(err), Pout = power(out);
   S.res = {
-    out, err, distInfo, st,
+    out, err, distInfo, st, thdTone,
     snr: Pn ? dB(P / Pn) : Infinity,
-    sdr: Pd > 1e-20 * P ? dB(P / Pd) : Infinity,
-    sinad: Pe > 1e-20 * P ? dB(Pout / Pe) : Infinity,
-    distPct: 100 * Math.sqrt(Pd / P),
+    sdr: Pd > 1e-12 * P ? dB(P / Pd) : Infinity,
+    sinad: Pe > 1e-12 * P ? dB(Pout / Pe) : Infinity,
   };
   S.spec = null;
   buildBuffer();
@@ -713,13 +760,11 @@ function updateReadouts() {
   const r = S.res;
   $("tSnr").textContent = fmtDb(r.snr);
   $("tSnn").textContent = fmtDb(isFinite(r.snr) ? dB(1 + Math.pow(10, r.snr / 10)) : Infinity);
+  $("tThd").textContent = isFinite(r.thdTone)
+    ? `${r.thdTone.toFixed(1)} dBc · ${(100 * Math.pow(10, r.thdTone / 20)).toPrecision(2)}%` : "–";
   $("tSdr").textContent = fmtDb(r.sdr);
-  $("tThd").textContent = isFinite(r.sdr) ? r.distPct.toPrecision(r.distPct < 1 ? 2 : 3) + " %" : "0 %";
   $("tSinad").textContent = fmtDb(r.sinad);
-  const notes = [];
-  if (r.st.sdrOn) notes.push(r.distInfo);
-  if (r.st.band !== "full") notes.push("bandwidth loss counts as distortion");
-  $("tNote").textContent = notes.join(" · ");
+  $("tNote").textContent = r.st.thdOn ? r.distInfo : "";
 }
 
 let pending = false;
@@ -731,19 +776,19 @@ function schedule() {
 }
 function updateLabels() {
   $("snrCtl").classList.toggle("off", !$("snrOn").checked);
-  $("sdrCtl").classList.toggle("off", !$("sdrOn").checked);
+  $("thdCtl").classList.toggle("off", !$("thdOn").checked);
 }
 function manual() { $("preset").value = ""; $("presetNote").textContent = ""; }
 
 // picking a type also switches that control on
 const noiseSeg = sel("noise", () => { $("snrOn").checked = true; manual(); schedule(); });
-const distSeg = sel("dist", () => { $("sdrOn").checked = true; manual(); schedule(); });
+const distSeg = sel("dist", () => { $("thdOn").checked = true; manual(); schedule(); });
 const bandSeg = sel("band", () => { manual(); schedule(); });
 const zoomSeg = seg("zoomSeg", "0.02", v => { S.zoomLen = +v; drawOverview(); drawZoom(); });
 // the number box holds the value; the slider follows it (and pins at its ends for typed values outside its range)
-const LIMITS = { snr: [-60, 140], sdr: [-10, 140] };
+const LIMITS = { snr: [-60, 140], thd: [-140, 0] };
 function setVal(id, v) { $(id + "Num").value = v; $(id).value = v; }
-for (const id of ["snr", "sdr"]) {
+for (const id of ["snr", "thd"]) {
   const changed = () => { $(id + "On").checked = true; manual(); schedule(); };
   $(id).addEventListener("input", () => { $(id + "Num").value = $(id).value; changed(); });
   $(id + "Num").addEventListener("input", () => {
@@ -757,7 +802,7 @@ for (const id of ["snr", "sdr"]) {
     $(id).value = $(id + "Num").value; changed();
   });
 }
-for (const id of ["snrOn", "sdrOn"]) $(id).addEventListener("change", () => { manual(); schedule(); });
+for (const id of ["snrOn", "thdOn"]) $(id).addEventListener("change", () => { manual(); schedule(); });
 $("playBtn").addEventListener("click", play);
 $("pauseBtn").addEventListener("click", pause);
 $("stopBtn").addEventListener("click", stop);
@@ -772,55 +817,55 @@ $("about").addEventListener("click", e => { if (e.target === $("about")) $("abou
 // band: "full" | a BANDS key | [lowHz, highHz]
 const PRESETS = [
   { group: "Comparisons" },
-  { id: "clean",   name: "Clean", snrOn: false, sdrOn: false, band: "full" },
-  { id: "noise20", name: "20 dB SINAD, all noise", snrOn: true, snr: 20, noise: "white", sdrOn: false, band: "full" },
-  { id: "dist20",  name: "20 dB SINAD, all distortion", snrOn: false, sdrOn: true, sdr: 20, dist: "hard", band: "full" },
-  { id: "hum",     name: "Mains hum", snrOn: true, snr: 30, noise: "hum", sdrOn: false, band: "full" },
-  { id: "faint",   name: "Barely audible (60 dB)", snrOn: true, snr: 60, noise: "white", sdrOn: true, sdr: 60, dist: "bits", band: "full" },
+  { id: "clean",   name: "Clean", snrOn: false, thdOn: false, band: "full" },
+  { id: "noise20", name: "Noise only (SNR 20 dB)", snrOn: true, snr: 20, noise: "white", thdOn: false, band: "full" },
+  { id: "dist20",  name: "Distortion only (10% THD)", snrOn: false, thdOn: true, thd: -20, dist: "hard", band: "full" },
+  { id: "hum",     name: "Mains hum", snrOn: true, snr: 30, noise: "hum", thdOn: false, band: "full" },
+  { id: "faint",   name: "Barely audible (−60 dB)", snrOn: true, snr: 60, noise: "white", thdOn: true, thd: -60, dist: "bits", band: "full" },
   // Radio limits. Threshold figures are the spec's own number (ETSI SINAD is psophometrically weighted; used as-is).
   // (S+N)/N figures are converted to SNR: 6 → 4.7, 10 → 9.5, 3 → 0 dB.
   { group: "Airband (VHF AM)" },
-  { id: "air-thr", name: "Airborne Rx threshold", snrOn: true, snr: 4.7, noise: "white", sdrOn: false, band: [350, 2500],
+  { id: "air-thr", name: "Airborne Rx threshold", snrOn: true, snr: 4.7, noise: "white", thdOn: false, band: [350, 2500],
     note: "TSO-C169a / DO-186B sensitivity point: 6 dB (S+N)/N. Audio passband 350–2500 Hz." },
-  { id: "air-dist", name: "Airborne Rx max distortion", snrOn: false, sdrOn: true, sdr: 18.4, dist: "soft", band: [350, 2500],
+  { id: "air-dist", name: "Airborne Rx max distortion", snrOn: false, thdOn: true, thd: -18.4, dist: "asym", band: [350, 2500],
     note: "Worst audio distortion an airborne receiver may have: 12% THD (DO-186B era)." },
-  { id: "air-gnd", name: "Ground Rx threshold", snrOn: true, snr: 11.7, noise: "white", sdrOn: false, band: [300, 3400],
+  { id: "air-gnd", name: "Ground Rx threshold", snrOn: true, snr: 11.7, noise: "white", thdOn: false, band: [300, 3400],
     note: "ETSI EN 300 676-1 ground radio sensitivity: 12 dB SINAD (25 kHz channel)." },
-  { id: "air-icao", name: "ICAO coverage edge", snrOn: true, snr: 15, noise: "white", sdrOn: false, band: [350, 2500],
+  { id: "air-icao", name: "ICAO coverage edge", snrOn: true, snr: 15, noise: "white", thdOn: false, band: [350, 2500],
     note: "ICAO Annex 10 planning ratio at the edge of a service volume: 15 dB." },
-  { id: "air-good", name: "Strong signal", snrOn: true, snr: 40, noise: "white", sdrOn: true, sdr: 26, dist: "soft", band: [350, 2500],
+  { id: "air-good", name: "Strong signal", snrOn: true, snr: 40, noise: "white", thdOn: true, thd: -26, dist: "asym", band: [350, 2500],
     note: "Clean airband audio: 40 dB (S+N)/N noise floor with the 5% distortion limit (EN 300 676)." },
   { group: "Land mobile & marine (VHF/UHF FM)" },
-  { id: "fm-12", name: "12 dB SINAD reference", snrOn: true, snr: 11.7, noise: "white", sdrOn: false, band: [300, 3000],
+  { id: "fm-12", name: "12 dB SINAD reference", snrOn: true, snr: 11.7, noise: "white", thdOn: false, band: [300, 3000],
     note: "TIA-603 reference sensitivity, the figure on every two-way radio spec sheet. Roughly DAQ 2: understandable with effort." },
-  { id: "fm-14", name: "14 dB SINAD (interference tests)", snrOn: true, snr: 13.8, noise: "white", sdrOn: false, band: [300, 3000],
+  { id: "fm-14", name: "14 dB SINAD (interference tests)", snrOn: true, snr: 13.8, noise: "white", thdOn: false, band: [300, 3000],
     note: "The degraded level used for adjacent-channel, blocking and intermod tests (EN 300 086 / EN 301 025)." },
-  { id: "fm-17", name: "17 dB SINAD (DAQ 3)", snrOn: true, snr: 16.9, noise: "white", sdrOn: false, band: [300, 3000],
+  { id: "fm-17", name: "17 dB SINAD (DAQ 3)", snrOn: true, snr: 16.9, noise: "white", thdOn: false, band: [300, 3000],
     note: "TSB-88 coverage design target: speech understandable with slight effort." },
-  { id: "fm-20", name: "20 dB SINAD (ETSI / marine)", snrOn: true, snr: 20, noise: "white", sdrOn: false, band: [300, 3000],
+  { id: "fm-20", name: "20 dB SINAD (ETSI / marine)", snrOn: true, snr: 20, noise: "white", thdOn: false, band: [300, 3000],
     note: "ETSI EN 300 086 and EN 301 025 (marine VHF) maximum usable sensitivity. About DAQ 3.4." },
-  { id: "fm-25", name: "25 dB SINAD (DAQ 4)", snrOn: true, snr: 25, noise: "white", sdrOn: false, band: [300, 3000],
+  { id: "fm-25", name: "25 dB SINAD (DAQ 4)", snrOn: true, snr: 25, noise: "white", thdOn: false, band: [300, 3000],
     note: "Speech easily understood. Public-safety coverage target." },
-  { id: "fm-good", name: "Strong signal", snrOn: true, snr: 40, noise: "white", sdrOn: true, sdr: 20, dist: "soft", band: [300, 3000],
+  { id: "fm-good", name: "Strong signal", snrOn: true, snr: 40, noise: "white", thdOn: true, thd: -20, dist: "soft", band: [300, 3000],
     note: "TIA-603 strong-signal limits: hum and noise 40 dB down, distortion ≤ 10%." },
   { group: "Broadcast" },
-  { id: "bc-fm-us", name: "FM usable sensitivity", snrOn: true, snr: 30, noise: "white", sdrOn: false, band: [30, 15000],
+  { id: "bc-fm-us", name: "FM usable sensitivity", snrOn: true, snr: 30, noise: "white", thdOn: false, band: [30, 15000],
     note: "IHF usable sensitivity for an FM tuner: 30 dB, where audio becomes listenable." },
-  { id: "bc-fm-good", name: "FM good reception", snrOn: true, snr: 50, noise: "white", sdrOn: true, sdr: 34, dist: "soft", band: [30, 15000],
+  { id: "bc-fm-good", name: "FM good reception", snrOn: true, snr: 50, noise: "white", thdOn: true, thd: -34, dist: "soft", band: [30, 15000],
     note: "50 dB quieting with 2% distortion (DIN 45500): good hi-fi FM." },
-  { id: "bc-am-thr", name: "AM (MW) sensitivity", snrOn: true, snr: 26, noise: "white", sdrOn: false, band: [100, 2000],
+  { id: "bc-am-thr", name: "AM (MW) sensitivity", snrOn: true, snr: 26, noise: "white", thdOn: false, band: [100, 2000],
     note: "ITU-R BS.703 reference receiver: 26 dB S/N, audio −3 dB at 2 kHz." },
-  { id: "bc-am-good", name: "AM (MW) good signal", snrOn: true, snr: 40, noise: "white", sdrOn: true, sdr: 30.5, dist: "hard", band: [100, 4500],
+  { id: "bc-am-good", name: "AM (MW) good signal", snrOn: true, snr: 40, noise: "white", thdOn: true, thd: -30.5, dist: "hard", band: [100, 4500],
     note: "Strong local MW station: 40 dB S/N, 3% distortion, 4.5 kHz audio (9 kHz channels)." },
   { group: "HF SSB" },
-  { id: "hf-10", name: "SSB threshold", snrOn: true, snr: 9.5, noise: "white", sdrOn: false, band: [300, 2700],
+  { id: "hf-10", name: "SSB threshold", snrOn: true, snr: 9.5, noise: "white", thdOn: false, band: [300, 2700],
     note: "Standard SSB sensitivity point: 10 dB (S+N)/N, on amateur, aviation and marine spec sheets." },
-  { id: "hf-mil", name: "Military HF threshold", snrOn: true, snr: 9.5, noise: "white", sdrOn: true, sdr: 25, dist: "soft", band: [300, 3050],
+  { id: "hf-mil", name: "Military HF threshold", snrOn: true, snr: 9.5, noise: "white", thdOn: true, thd: -25, dist: "soft", band: [300, 3050],
     note: "MIL-STD-188-141C: 10 dB SINAD at sensitivity, distortion at least 25 dB down." },
-  { id: "hf-mds", name: "Ham MDS (barely there)", snrOn: true, snr: 0, noise: "white", sdrOn: false, band: [300, 2700],
+  { id: "hf-mds", name: "Ham MDS (barely there)", snrOn: true, snr: 0, noise: "white", thdOn: false, band: [300, 2700],
     note: "ARRL minimum discernible signal: 3 dB (S+N)/N, i.e. signal equal to noise." },
   { group: "Telephone" },
-  { id: "tel-g712", name: "Telephone channel (G.712)", snrOn: true, snr: 46, noise: "white", sdrOn: true, sdr: 33, dist: "bits", band: [300, 3400],
+  { id: "tel-g712", name: "Telephone channel (G.712)", snrOn: true, snr: 46, noise: "white", thdOn: true, thd: -33, dist: "bits", band: [300, 3400],
     note: "ITU-T G.712: 300–3400 Hz, 33 dB signal-to-quantisation-distortion. Noise level is inferred." },
 ];
 {
@@ -834,9 +879,9 @@ const PRESETS = [
 }
 $("preset").addEventListener("change", e => {
   const p = PRESETS.find(q => q.id === e.target.value); if (!p) return;
-  $("snrOn").checked = p.snrOn; $("sdrOn").checked = p.sdrOn;
+  $("snrOn").checked = p.snrOn; $("thdOn").checked = p.thdOn;
   if (p.snr != null) setVal("snr", p.snr);
-  if (p.sdr != null) setVal("sdr", p.sdr);
+  if (p.thd != null) setVal("thd", p.thd);
   if (p.noise) noiseSeg.set(p.noise);
   if (p.dist) distSeg.set(p.dist);
   if (Array.isArray(p.band)) {
