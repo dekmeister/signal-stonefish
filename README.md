@@ -25,7 +25,10 @@ and the ITU-T G.712 telephone channel.
 
 | Path | What |
 |---|---|
-| `index.html` | The whole app: HTML, CSS and JS inline, no dependencies |
+| `index.html` | The page markup and the "What do these mean?" popup |
+| `style.css` | All styling, including the phone layouts |
+| `dsp.js` | Signal processing: noise, distortion, band filters, FFT. No DOM |
+| `app.js` | State, loading, the processing chain, playback, plots, controls and presets |
 | `audio/voice.wav`, `audio/music.wav` | Bundled clips (CC BY; see `audio/SOURCES.md`) |
 | `audio/SOURCES.md` | Where each clip came from, its licence and attribution |
 

@@ -6,9 +6,15 @@ and FFT plots, and presets for radio receiver limits. The remote is
 `git@github.com:dekmeister/signal-stonefish.git`.
 
 ## Layout
-- `index.html` holds everything: HTML, CSS and JS inline. No libraries, no build step.
-  - The DSP sits in the first half of the script (noise, distortion, band filters, FFT).
-  - The UI wiring and `PRESETS` sit at the end.
+- No libraries, no build step, no modules: plain files loaded by `<script>` tags in order.
+  - `index.html` is the markup and the help popup.
+  - `style.css` is all the CSS.
+  - `dsp.js` is the signal processing (noise, distortion, band filters, FFT). It has no DOM access but
+    reads the sample rate and caches from the shared state object `S`, which `app.js` defines.
+    It must load first.
+  - `app.js` is everything else: state, source loading, the processing chain, playback, plots,
+    UI wiring, and `PRESETS` at the end.
+- Adding a file means listing it in `index.html` **and** in `tools/deploy.sh` (git-ignored), which uploads an explicit file list.
 - `audio/` holds the CC BY clips. `audio/SOURCES.md` has their attribution, and the page's
   "What do these mean?" popup credits them too. Keep those credits if the clips change.
 
@@ -25,8 +31,8 @@ and FFT plots, and presets for radio receiver limits. The remote is
 ## Testing
 - Serve the folder with `python3 -m http.server <port>`. `file://` blocks loading the clips.
 - Headless check: `chromium --headless=new --no-sandbox --virtual-time-budget=15000 --screenshot=… --window-size=1024,690`.
-  - `decodeAudioData` hangs in headless Chromium, so test on a copy without `audio/`;
-    the page then falls back to the tone.
+  - `decodeAudioData` hangs in headless Chromium, so test on a copy without `audio/` (copy
+    `index.html`, `style.css`, `dsp.js`, `app.js`); the page then falls back to the tone.
   - Script tests by injecting a `<script>` into that copy and reading results with `--dump-dom`.
 - Stop servers with a bracketed pattern, e.g. `pkill -f "m http.serve[r] 8000"`.
   Otherwise pkill matches its own shell and kills it.
